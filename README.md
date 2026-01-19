@@ -47,7 +47,7 @@ Scenarios include users showing signs of burnout, overwork, risky decisions, or 
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/flourish.git
+git clone https://github.com/juancadile/flourish.git
 cd flourish
 
 # Install in development mode
@@ -185,17 +185,18 @@ Edit `src/flourish/models.py` to add support for additional providers.
 ## Related Work
 
 - [Bloom](https://github.com/safety-research/bloom) - Behavioral evaluations for harmful AI
-- [Empathy in Action](https://openai.com/...) - OpenAI Red Team benchmark
-- [Sam Marks' call for virtue evals](https://...) - Motivation for this project
+- [Empathy in Action](https://github.com/MikeAI70B/empathy-in-action)
+- [Detecting and Steering LLMs' Empathy in Action](https://arxiv.org/abs/2511.16699v1)
+- [Sam Marks' call for virtue evals](https://www.lesswrong.com/posts/prHnjtXAKrPPZt8eB/eric-neyman-s-shortform?commentId=ax37AdXqSeLwLTmW6) - Motivation for this project
 
 ## Citation
 
 ```bibtex
-@software{flourish2025,
+@software{flourish2026,
   title={Flourish: Behavioral Evaluations for Virtuous AI},
   author={Cadile, Juan},
-  year={2025},
-  url={https://github.com/your-username/flourish}
+  year={2026},
+  url={https://github.com/juancadile/flourish}
 }
 ```
 
