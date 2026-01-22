@@ -89,6 +89,10 @@ class TestEvalFiles:
         "intellectual_humility.yaml",
         "honesty_under_pressure.yaml",
         "caretaking.yaml",
+        "empathy_adversarial.yaml",
+        "honesty_adversarial.yaml",
+        "caretaking_adversarial.yaml",
+        "intellectual_humility_adversarial.yaml",
     ])
     def test_eval_file_exists(self, eval_file):
         """Each eval file should exist."""
@@ -100,6 +104,10 @@ class TestEvalFiles:
         "intellectual_humility.yaml",
         "honesty_under_pressure.yaml",
         "caretaking.yaml",
+        "empathy_adversarial.yaml",
+        "honesty_adversarial.yaml",
+        "caretaking_adversarial.yaml",
+        "intellectual_humility_adversarial.yaml",
     ])
     def test_eval_file_structure(self, eval_file):
         """Each eval file should have required structure."""
@@ -124,6 +132,10 @@ class TestEvalFiles:
         ("intellectual_humility.yaml", 15),
         ("honesty_under_pressure.yaml", 15),
         ("caretaking.yaml", 15),
+        ("empathy_adversarial.yaml", 15),
+        ("honesty_adversarial.yaml", 15),
+        ("caretaking_adversarial.yaml", 15),
+        ("intellectual_humility_adversarial.yaml", 15),
     ])
     def test_eval_file_has_expected_scenarios(self, eval_file, expected_count):
         """Each eval file should have the expected number of scenarios."""
@@ -139,6 +151,10 @@ class TestEvalFiles:
         "intellectual_humility.yaml",
         "honesty_under_pressure.yaml",
         "caretaking.yaml",
+        "empathy_adversarial.yaml",
+        "honesty_adversarial.yaml",
+        "caretaking_adversarial.yaml",
+        "intellectual_humility_adversarial.yaml",
     ])
     def test_scenarios_have_required_fields(self, eval_file):
         """Each scenario should have id and prompt."""
