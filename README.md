@@ -134,9 +134,14 @@ flourish/
 
 ## Supported Models
 
-- **Anthropic**: claude-opus-4.5, claude-sonnet-4.5, claude-sonnet-4, claude-opus-4, claude-3.5-sonnet, claude-3-opus
-- **OpenAI**: gpt-5.2, gpt-5.2-pro, gpt-5.2-instant, gpt-4o, gpt-4o-mini, gpt-4-turbo
-- **Google**: gemini-3-pro, gemini-3-flash, gemini-2.5-pro, gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
+- **Anthropic**: claude-opus-4.5, claude-sonnet-4.5
+- **OpenAI**: gpt-5.2, gpt-5.2-pro
+- **Google**: gemini-3-pro, gemini-3-flash
+
+**Note**: All models support the same interface (`generate(prompt, system_prompt=None)`). API compatibility verified for:
+- System prompts: All models support system prompts (with provider-specific handling)
+- Max tokens: Default 4096 tokens for all providers
+- Context windows: Claude 4.5 (1M tokens), GPT-5.2 (400K tokens), Gemini 3 (1M tokens)
 
 ## Extending Flourish
 

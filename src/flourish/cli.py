@@ -15,13 +15,16 @@ def main():
         epilog="""
 Examples:
   # Run a single eval on one model
-  flourish --model claude-sonnet-4 --eval evals/empathy_in_action.yaml
+  flourish --model claude-sonnet-4.5 --eval evals/empathy_in_action.yaml
 
   # Run all evals on multiple models
-  flourish --model claude-sonnet-4 gpt-4o gemini-2.0-flash --eval evals/*.yaml
+  flourish --model claude-sonnet-4.5 gpt-5.2 gemini-3-flash --eval evals/*.yaml
+
+  # List available models
+  flourish --list-models
 
   # Save results to a directory
-  flourish --model claude-sonnet-4 --eval evals/*.yaml --output results/
+  flourish --model claude-sonnet-4.5 --eval evals/*.yaml --output results/
         """
     )
 
@@ -39,8 +42,8 @@ Examples:
 
     parser.add_argument(
         "--judge", "-j",
-        default="claude-sonnet-4",
-        help="Judge model for scoring (default: claude-sonnet-4)",
+        default="claude-sonnet-4.5",
+        help="Judge model for scoring (default: claude-sonnet-4.5)",
     )
 
     parser.add_argument(
