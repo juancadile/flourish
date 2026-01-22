@@ -67,17 +67,17 @@ export GOOGLE_API_KEY="your-key"
 **Command Line:**
 ```bash
 # Single model, single eval
-flourish --model claude-sonnet-4 --eval evals/empathy_in_action.yaml
+flourish --model claude-sonnet-4.5 --eval evals/empathy_in_action.yaml
 
 # Multiple models, all evals
-flourish --model claude-sonnet-4 gpt-4o gemini-2.0-flash --eval evals/*.yaml --output results/
+flourish --model claude-sonnet-4.5 gpt-5.2 gemini-3-flash --eval evals/*.yaml --output results/
 ```
 
 **Python API:**
 ```python
 from flourish import VirtueEvaluator
 
-evaluator = VirtueEvaluator("claude-sonnet-4")
+evaluator = VirtueEvaluator("claude-sonnet-4.5")
 results = evaluator.run_eval_suite("evals/empathy_in_action.yaml")
 print(results.to_string())
 ```
@@ -93,9 +93,9 @@ jupyter notebook notebooks/run_evals.ipynb
 
 | Model | Empathy | Humility | Honesty | Caretaking | Average |
 |-------|---------|----------|---------|------------|---------|
-| claude-sonnet-4 | - | - | - | - | - |
-| gpt-4o | - | - | - | - | - |
-| gemini-2.0-flash | - | - | - | - | - |
+| claude-sonnet-4.5 | - | - | - | - | - |
+| gpt-5.2 | - | - | - | - | - |
+| gemini-3-flash | - | - | - | - | - |
 
 ## Design Principles
 
@@ -134,9 +134,9 @@ flourish/
 
 ## Supported Models
 
-- **Anthropic**: claude-sonnet-4, claude-opus-4, claude-3.5-sonnet, claude-3-opus
-- **OpenAI**: gpt-4o, gpt-4o-mini, gpt-4-turbo
-- **Google**: gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
+- **Anthropic**: claude-opus-4.5, claude-sonnet-4.5, claude-sonnet-4, claude-opus-4, claude-3.5-sonnet, claude-3-opus
+- **OpenAI**: gpt-5.2, gpt-5.2-pro, gpt-5.2-instant, gpt-4o, gpt-4o-mini, gpt-4-turbo
+- **Google**: gemini-3-pro, gemini-3-flash, gemini-2.5-pro, gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
 
 ## Extending Flourish
 

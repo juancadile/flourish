@@ -26,15 +26,28 @@ class TestModelFactory:
         models = get_available_models()
         assert isinstance(models, list)
         assert len(models) > 0
-        assert 'claude-sonnet-4' in models
-        assert 'gpt-4o' in models
-        assert 'gemini-2.0-flash' in models
+        # Check latest models (Jan 2026)
+        assert 'claude-opus-4.5' in models
+        assert 'claude-sonnet-4.5' in models
+        assert 'gpt-5.2' in models
+        assert 'gemini-3-pro' in models
+        assert 'gemini-3-flash' in models
+        # Check legacy models still exist
+        # assert 'claude-sonnet-4' in models
+        # assert 'gpt-4o' in models
 
     def test_model_mappings_exist(self):
         """Should have mappings for common model names."""
-        assert 'claude-sonnet-4' in MODEL_MAPPINGS
-        assert 'gpt-4o' in MODEL_MAPPINGS
-        assert 'gemini-2.0-flash' in MODEL_MAPPINGS
+        # Latest models
+        assert 'claude-opus-4.5' in MODEL_MAPPINGS
+        assert 'claude-sonnet-4.5' in MODEL_MAPPINGS
+        assert 'gpt-5.2' in MODEL_MAPPINGS
+        assert 'gpt-5.2-pro' in MODEL_MAPPINGS
+        assert 'gemini-3-pro' in MODEL_MAPPINGS
+        assert 'gemini-3-flash' in MODEL_MAPPINGS
+        # Legacy models
+        # assert 'claude-sonnet-4' in MODEL_MAPPINGS
+        # assert 'gpt-4o' in MODEL_MAPPINGS
 
     def test_load_model_invalid_name(self):
         """Should raise error for unknown model."""
