@@ -1,0 +1,49 @@
+# W&B Sweep Configuration for Flourish
+# Run with: wandb sweep wandb-sweep.yaml
+# Then: wandb agent <sweep-id>
+
+program: flourish
+method: grid
+metric:
+  name: avg_score
+  goal: maximize
+
+parameters:
+  model:
+    values:
+      - claude-sonnet-4.5
+      - claude-opus-4.5
+      - gpt-5.2
+      - gemini-3-pro
+      - gemini-3-flash
+
+  eval:
+    values:
+      - evals/empathy_in_action.yaml
+      - evals/intellectual_humility.yaml
+      - evals/honesty_under_pressure.yaml
+      - evals/caretaking.yaml
+
+  judge:
+    value: claude-sonnet-4.5
+
+  wandb:
+    value: true
+
+  wandb-project:
+    value: flourish-sweeps
+
+command:
+  - ${env}
+  - python
+  - -m
+  - flourish.cli
+  - --model
+  - ${model}
+  - --eval
+  - ${eval}
+  - --judge
+  - ${judge}
+  - --wandb
+  - --wandb-project
+  - ${wandb-project}

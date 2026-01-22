@@ -87,6 +87,52 @@ print(results.to_string())
 jupyter notebook notebooks/run_evals.ipynb
 ```
 
+### Experiment Tracking with Weights & Biases
+
+Track your evaluations systematically with W&B integration:
+
+```bash
+# Install with W&B support
+pip install -e ".[dev]" wandb
+
+# Run with W&B tracking
+flourish --model claude-sonnet-4 gpt-4o --eval evals/*.yaml --wandb --wandb-project my-experiments
+
+# Specify W&B entity/team
+flourish --model claude-sonnet-4 --eval evals/*.yaml --wandb --wandb-entity my-team
+```
+
+**Python API:**
+```python
+from flourish import VirtueEvaluator
+from flourish.wandb_logger import WandbLogger
+
+# Initialize W&B logger
+wandb_logger = WandbLogger(project="flourish-experiments", entity="my-team")
+
+# Run evaluations with tracking
+evaluator = VirtueEvaluator("claude-sonnet-4", wandb_logger=wandb_logger)
+results = evaluator.run_eval_suite("evals/empathy_in_action.yaml")
+```
+
+W&B automatically tracks:
+- Model configurations and hyperparameters
+- Per-scenario and aggregate scores
+- Results tables and artifacts
+- Experiment comparisons across runs
+- API call counts and cost metrics
+
+**W&B Sweeps for hyperparameter search:**
+```bash
+# Initialize sweep
+wandb sweep wandb-sweep.yaml
+
+# Run sweep agent
+wandb agent <sweep-id>
+```
+
+The included `wandb-sweep.yaml` runs a grid search across all models and virtues for comprehensive benchmarking.
+
 ## Results
 
 *Results will appear here after running evaluations*

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from flourish.evaluator import VirtueEvaluator, run_full_evaluation, aggregate_results
 from flourish.models import get_available_models
+from flourish.wandb_logger import WandbLogger
 
 
 def main():
@@ -22,6 +23,9 @@ Examples:
 
   # Save results to a directory
   flourish --model claude-sonnet-4 --eval evals/*.yaml --output results/
+
+  # Track experiments with Weights & Biases
+  flourish --model claude-sonnet-4 --eval evals/*.yaml --wandb --wandb-project my-experiments
         """
     )
 
@@ -61,6 +65,23 @@ Examples:
         help="List available models and exit",
     )
 
+    parser.add_argument(
+        "--wandb",
+        action="store_true",
+        help="Enable Weights & Biases experiment tracking",
+    )
+
+    parser.add_argument(
+        "--wandb-project",
+        default="flourish",
+        help="W&B project name (default: flourish)",
+    )
+
+    parser.add_argument(
+        "--wandb-entity",
+        help="W&B entity/team name (optional)",
+    )
+
     args = parser.parse_args()
 
     if args.list_models:
@@ -90,6 +111,20 @@ Examples:
         print("Error: No valid evaluation files found", file=sys.stderr)
         sys.exit(1)
 
+    # Initialize W&B logger if requested
+    wandb_logger = None
+    if args.wandb:
+        if not WandbLogger.is_available():
+            print("Warning: wandb not installed. Install with: pip install wandb", file=sys.stderr)
+            print("Continuing without W&B tracking...", file=sys.stderr)
+        else:
+            wandb_logger = WandbLogger(
+                project=args.wandb_project,
+                entity=args.wandb_entity,
+                enabled=True
+            )
+            print(f"W&B tracking enabled: project={args.wandb_project}")
+
     # Run evaluations
     results = run_full_evaluation(
         models=args.model,
@@ -97,6 +132,7 @@ Examples:
         judge_model=args.judge,
         output_dir=args.output,
         verbose=not args.quiet,
+        wandb_logger=wandb_logger,
     )
 
     if results.empty:
