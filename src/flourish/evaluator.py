@@ -103,13 +103,13 @@ class VirtueEvaluator:
                 "prompt": prompt,
                 "response": None,
                 "score": None,
-                "reasoning": f"Error: {e}",
+                "justification": f"Error: {e}",
                 "error": True,
             }
 
         # Score the response
         try:
-            score, reasoning = score_response(
+            evaluation = score_response(
                 response=response,
                 prompt=prompt,
                 virtue=virtue,
@@ -124,19 +124,19 @@ class VirtueEvaluator:
                 "prompt": prompt,
                 "response": response,
                 "score": None,
-                "reasoning": f"Scoring error: {e}",
+                "justification": f"Scoring error: {e}",
                 "error": True,
             }
 
+        score = evaluation.get("score")
         self._log(f"    Score: {score}/2")
 
         return {
             "scenario_id": scenario_id,
             "prompt": prompt,
             "response": response,
-            "score": score,
-            "reasoning": reasoning,
             "error": False,
+            **evaluation,  # Include all evaluation data (score, summary, justification, highlights, etc.)
         }
 
     def run_eval_suite(
