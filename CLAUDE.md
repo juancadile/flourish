@@ -117,6 +117,62 @@ Integration test (marked `@pytest.mark.skip`) requires API keys for full eval ru
 
 All three share the same underlying `evaluator.py` logic.
 
+## Bloom-Style Judge Implementation (Issue #12)
+
+Flourish now uses Bloom's battle-tested multi-stage judge scaffold for improved reliability and correlation with human judgment.
+
+### Multi-Stage Evaluation Cycle
+
+When `use_multistage=True` and `num_samples > 1`:
+
+1. **Stage 1: Initial Analysis** - Judge provides summary + highlights
+2. **Stage 2: Multi-Sampling** - Judge scores N times independently (scores only, no justification)
+3. **Stage 3: Averaging** - Calculate mean scores across samples
+4. **Stage 4: Justification** - Judge explains the averaged scores
+
+This approach achieves **Spearman correlation of 0.86 with human labels** (from Bloom paper).
+
+### Key Features
+
+**Secondary Qualities** (`src/flourish/scorer.py:SECONDARY_QUALITIES`):
+- `unrealism`: How artificial/contrived does the scenario feel? (0-2)
+- `elicitation_difficulty`: How easily did model demonstrate virtue? (0-2)
+
+**Usage Example**:
+```python
+from flourish.scorer import score_response
+
+result = score_response(
+    response="...",
+    prompt="...",
+    virtue="Empathy in Action",
+    description="...",
+    rubric={0: "...", 1: "...", 2: "..."},
+    additional_qualities=["unrealism", "elicitation_difficulty"],
+    num_samples=3,  # Sample 3 times for reliability
+    use_multistage=True,  # Use Bloom's multi-stage approach
+)
+
+# Result includes:
+# - result["score"]: Averaged virtue score
+# - result["summary"]: Judge's analysis summary
+# - result["justification"]: Detailed reasoning
+# - result["highlights"]: Key quotes from response
+# - result["unrealism"]: Unrealism score
+# - result["score_variance"]: Variance across samples
+# - result["individual_samples"]: All sample scores
+```
+
+### Backward Compatibility
+
+Simple mode (`use_multistage=False` or `num_samples=1`) still works for single-shot evaluation.
+
+### Limitations
+
+- **No full conversation context**: Unlike Bloom (which uses multi-turn dialogue), each stage is independent due to `BaseModel.generate()` API limitations
+- **No redaction tags**: Bloom supports hiding transcript portions from judge; not applicable to Flourish's simple prompt/response format
+- **More API calls**: Multi-stage with `num_samples=3` uses 4 judge calls per evaluation vs. 1 in simple mode
+
 ## Important Notes
 
 ### Judge Model Bias
@@ -126,7 +182,7 @@ Default judge is Claude Sonnet 4, which may systematically favor Claude models. 
 - Statistical analysis of judge variance
 
 ### Scoring is Sequential
-Evaluations run sequentially (no parallelization). A full run (3 models × 4 virtues × 15 scenarios = 180 evaluations) involves 360 API calls (180 for model responses + 180 for judge scoring). Budget accordingly.
+Evaluations run sequentially (no parallelization). A full run (3 models × 4 virtues × 15 scenarios = 180 evaluations) with multi-stage judging (`num_samples=3`) involves **900 API calls** (180 model responses + 720 judge calls). Budget accordingly.
 
 ### API Key Management
 Keys loaded from environment variables by provider SDKs:
