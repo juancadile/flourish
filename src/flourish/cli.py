@@ -59,6 +59,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--meta-judge",
+        action="store_true",
+        help="Run meta-judge analysis for suite-level insights",
+    )
+
+    parser.add_argument(
         "--list-models",
         action="store_true",
         help="List available models and exit",
@@ -100,6 +106,7 @@ Examples:
         judge_model=args.judge,
         output_dir=args.output,
         verbose=not args.quiet,
+        enable_meta_judge=args.meta_judge,
     )
 
     if results.empty:

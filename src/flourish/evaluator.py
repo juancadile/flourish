@@ -9,6 +9,7 @@ import pandas as pd
 from flourish.models import load_model, BaseModel
 from flourish.scorer import score_response
 from flourish.wandb_logger import WandbLogger
+from flourish.meta_judge import meta_judge_suite, generate_meta_analysis_report
 
 
 class VirtueEvaluator:
@@ -150,6 +151,8 @@ class VirtueEvaluator:
         self,
         eval_file: str | Path,
         save_responses: bool = True,
+        enable_meta_judge: bool = False,
+        output_dir: Optional[str | Path] = None,
     ) -> pd.DataFrame:
         """
         Run all scenarios in a virtue evaluation file.
@@ -157,6 +160,8 @@ class VirtueEvaluator:
         Args:
             eval_file: Path to the YAML evaluation file.
             save_responses: Whether to include full responses in output.
+            enable_meta_judge: Whether to run meta-judge analysis after evaluation.
+            output_dir: Directory to save meta-analysis report (required if enable_meta_judge=True).
 
         Returns:
             DataFrame with evaluation results.
@@ -243,6 +248,39 @@ class VirtueEvaluator:
                 # Log results as a table
                 self.wandb_logger.log_results_table(df)
 
+        # Run meta-judge if enabled
+        if enable_meta_judge:
+            if not output_dir:
+                self._log("Warning: enable_meta_judge=True but no output_dir specified. Skipping meta-analysis.")
+            else:
+                self._log(f"\n{'='*60}")
+                self._log("Running Meta-Judge Analysis...")
+                self._log(f"{'='*60}\n")
+
+                try:
+                    meta_analysis = meta_judge_suite(
+                        results_df=df,
+                        virtue=virtue,
+                        virtue_description=description,
+                        meta_judge_model=self.judge_model,
+                    )
+
+                    # Save report
+                    output_dir = Path(output_dir)
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    report_path = output_dir / f"meta_analysis_{virtue.replace(' ', '_')}_{timestamp}.md"
+
+                    report = generate_meta_analysis_report(meta_analysis, str(report_path))
+
+                    self._log(f"Meta-analysis saved to: {report_path}")
+                    self._log(f"\nMeta-Analysis Summary:")
+                    self._log(meta_analysis.get("summary", "No summary available"))
+                    self._log(f"\n{'='*60}\n")
+
+                except Exception as e:
+                    self._log(f"Error running meta-judge: {e}")
+
         if not save_responses:
             df = df.drop(columns=["prompt", "response"])
 
@@ -256,6 +294,7 @@ def run_full_evaluation(
     output_dir: Optional[str | Path] = None,
     verbose: bool = True,
     wandb_logger: Optional[WandbLogger] = None,
+    enable_meta_judge: bool = False,
 ) -> pd.DataFrame:
     """
     Run evaluations across multiple models and eval files.
@@ -267,6 +306,7 @@ def run_full_evaluation(
         output_dir: Directory to save results (optional).
         verbose: Whether to print progress.
         wandb_logger: Optional WandbLogger instance for experiment tracking.
+        enable_meta_judge: Whether to run meta-judge analysis for each eval suite.
 
     Returns:
         Combined DataFrame with all results.
@@ -283,7 +323,11 @@ def run_full_evaluation(
 
         for eval_file in eval_files:
             try:
-                df = evaluator.run_eval_suite(eval_file)
+                df = evaluator.run_eval_suite(
+                    eval_file,
+                    enable_meta_judge=enable_meta_judge,
+                    output_dir=output_dir,
+                )
                 all_results.append(df)
             except Exception as e:
                 if verbose:
