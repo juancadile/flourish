@@ -9,7 +9,7 @@ import pandas as pd
 from flourish.models import load_model, BaseModel
 from flourish.scorer import score_response
 from flourish.wandb_logger import WandbLogger
-
+from flourish.judge_comparison import generate_judge_comparison_report
 
 class VirtueEvaluator:
     """
@@ -333,3 +333,92 @@ def aggregate_results(df: pd.DataFrame) -> pd.DataFrame:
     summary = df.groupby(["model", "virtue"])["score"].mean().unstack()
     summary["average"] = summary.mean(axis=1)
     return summary.round(2)
+
+
+def run_multi_judge_evaluation(
+    models: list[str],
+    eval_files: list[str | Path],
+    judge_models: list[str],
+    output_dir: Optional[str | Path] = None,
+    verbose: bool = True,
+    wandb_logger: Optional[WandbLogger] = None,
+) -> pd.DataFrame:
+    """
+    Run evaluations with multiple judge models for bias analysis.
+
+    This runs the same evaluations multiple times, once with each judge model,
+    to enable comparison and bias detection.
+
+    Args:
+        models: List of model names to evaluate.
+        eval_files: List of paths to YAML evaluation files.
+        judge_models: List of judge models to use.
+        output_dir: Directory to save results (optional).
+        verbose: Whether to print progress.
+        wandb_logger: Optional WandbLogger instance for experiment tracking.
+
+    Returns:
+        Combined DataFrame with results from all judges.
+    """
+
+    all_results = []
+
+    if verbose:
+        print(f"\n{'='*60}")
+        print(f"Multi-Judge Evaluation")
+        print(f"Models: {', '.join(models)}")
+        print(f"Judges: {', '.join(judge_models)}")
+        print(f"Eval files: {len(eval_files)}")
+        print(f"{'='*60}\n")
+
+    # Run evaluation with each judge
+    for judge_model in judge_models:
+        if verbose:
+            print(f"\n--- Running with judge: {judge_model} ---\n")
+
+        results = run_full_evaluation(
+            models=models,
+            eval_files=eval_files,
+            judge_model=judge_model,
+            output_dir=None,  # Don't save individual results yet
+            verbose=verbose,
+            wandb_logger=wandb_logger,
+        )
+
+        all_results.append(results)
+
+    if not all_results:
+        return pd.DataFrame()
+
+    # Combine all results
+    combined = pd.concat(all_results, ignore_index=True)
+
+    # Save results if output_dir provided
+    if output_dir:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Save detailed results
+        results_path = output_dir / f"multi_judge_detailed_{timestamp}.csv"
+        combined.to_csv(results_path, index=False)
+
+        if verbose:
+            print(f"\nResults saved to: {results_path}")
+
+        # Generate judge comparison report
+        if verbose:
+            print("\nGenerating judge comparison report...")
+
+        report_path = output_dir / f"judge_comparison_{timestamp}.md"
+        report = generate_judge_comparison_report(
+            results_df=combined,
+            judges=judge_models,
+            output_path=str(report_path),
+        )
+
+        if verbose:
+            print(f"Judge comparison report saved to: {report_path}")
+
+    return combined

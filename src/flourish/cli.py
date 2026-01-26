@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from flourish.evaluator import VirtueEvaluator, run_full_evaluation, aggregate_results
+from flourish.evaluator import VirtueEvaluator, run_full_evaluation, run_multi_judge_evaluation, aggregate_results
 from flourish.models import get_available_models
 
 
@@ -44,6 +44,12 @@ Examples:
         "--judge", "-j",
         default="claude-sonnet-4.5",
         help="Judge model for scoring (default: claude-sonnet-4.5)",
+    )
+
+    parser.add_argument(
+        "--judges",
+        nargs="+",
+        help="Multiple judge models for multi-judge validation (overrides --judge)",
     )
 
     parser.add_argument(
@@ -94,13 +100,25 @@ Examples:
         sys.exit(1)
 
     # Run evaluations
-    results = run_full_evaluation(
-        models=args.model,
-        eval_files=eval_files,
-        judge_model=args.judge,
-        output_dir=args.output,
-        verbose=not args.quiet,
-    )
+    if args.judges and len(args.judges) > 1:
+        # Multi-judge evaluation
+        results = run_multi_judge_evaluation(
+            models=args.model,
+            eval_files=eval_files,
+            judge_models=args.judges,
+            output_dir=args.output,
+            verbose=not args.quiet,
+        )
+    else:
+        # Single judge evaluation
+        judge = args.judges[0] if args.judges else args.judge
+        results = run_full_evaluation(
+            models=args.model,
+            eval_files=eval_files,
+            judge_model=judge,
+            output_dir=args.output,
+            verbose=not args.quiet,
+        )
 
     if results.empty:
         print("No results generated", file=sys.stderr)
