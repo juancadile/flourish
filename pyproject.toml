@@ -41,6 +41,10 @@ dev = [
     "jupyter>=1.0.0",
     "ipykernel>=6.0.0",
 ]
+viewer = [
+    "streamlit>=1.28.0",
+    "plotly>=5.17.0",
+]
 
 [project.scripts]
 flourish = "flourish.cli:main"
