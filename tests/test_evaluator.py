@@ -137,8 +137,7 @@ class TestScorer:
         assert "{rubric_0}" in JUDGE_PROMPT_TEMPLATE
         assert "{rubric_1}" in JUDGE_PROMPT_TEMPLATE
         assert "{rubric_2}" in JUDGE_PROMPT_TEMPLATE
-        assert "{prompt}" in JUDGE_PROMPT_TEMPLATE
-        assert "{response}" in JUDGE_PROMPT_TEMPLATE
+        assert "{conversation_section}" in JUDGE_PROMPT_TEMPLATE
         assert "{additional_qualities}" in JUDGE_PROMPT_TEMPLATE
         assert "{quality_score_tags}" in JUDGE_PROMPT_TEMPLATE
 

@@ -82,10 +82,12 @@ class VirtueEvaluator:
         rubric: dict,
     ) -> dict:
         """
-        Evaluate a single scenario.
+        Evaluate a single scenario (supports both single-turn and multi-turn).
 
         Args:
-            scenario: Scenario dict with 'id' and 'prompt' keys.
+            scenario: Scenario dict with either:
+                - 'id' and 'prompt' keys (single-turn), OR
+                - 'id' and 'turns' keys (multi-turn)
             virtue: Name of the virtue being evaluated.
             description: Description of what the virtue measures.
             rubric: Scoring rubric dictionary.
@@ -94,9 +96,19 @@ class VirtueEvaluator:
             Dictionary with evaluation results.
         """
         scenario_id = scenario.get("id", "unknown")
-        prompt = scenario["prompt"]
-
         self._log(f"  Evaluating scenario: {scenario_id}")
+
+        # Check if this is a multi-turn scenario
+        if "turns" in scenario:
+            return self._evaluate_multi_turn_scenario(
+                scenario=scenario,
+                virtue=virtue,
+                description=description,
+                rubric=rubric,
+            )
+
+        # Single-turn scenario (legacy format)
+        prompt = scenario["prompt"]
 
         # Get model response
         try:
@@ -143,6 +155,105 @@ class VirtueEvaluator:
             "prompt": prompt,
             "response": response,
             "error": False,
+            **evaluation,  # includes score, justification, highlights, etc.
+        }
+
+    def _evaluate_multi_turn_scenario(
+        self,
+        scenario: dict,
+        virtue: str,
+        description: str,
+        rubric: dict,
+    ) -> dict:
+        """
+        Evaluate a multi-turn conversational scenario.
+
+        Args:
+            scenario: Scenario dict with 'id' and 'turns' keys.
+            virtue: Name of the virtue being evaluated.
+            description: Description of what the virtue measures.
+            rubric: Scoring rubric dictionary.
+
+        Returns:
+            Dictionary with evaluation results including conversation history.
+        """
+        scenario_id = scenario.get("id", "unknown")
+        turns = scenario["turns"]
+
+        conversation_history = []
+        final_response = None
+
+        self._log(f"    Multi-turn scenario with {len(turns)} turns")
+
+        try:
+            for turn_idx, turn in enumerate(turns):
+                turn_num = turn_idx + 1
+                user_message = turn.get("content") or turn.get("prompt")
+
+                if not user_message:
+                    raise ValueError(f"Turn {turn_num} missing 'content' or 'prompt' field")
+
+                self._log(f"      Turn {turn_num}/{len(turns)}")
+
+                # Generate response with conversation history
+                response = self.model.generate(
+                    prompt=user_message,
+                    conversation_history=conversation_history
+                )
+                self.api_call_count += 1
+
+                # Add both user message and assistant response to history
+                conversation_history.append({"role": "user", "content": user_message})
+                conversation_history.append({"role": "assistant", "content": response})
+
+                final_response = response
+
+        except Exception as e:
+            self._log(f"    Error in multi-turn conversation: {e}")
+            return {
+                "scenario_id": scenario_id,
+                "prompt": str(turns),
+                "response": None,
+                "score": None,
+                "reasoning": f"Error: {e}",
+                "error": True,
+                "conversation_history": conversation_history,
+            }
+
+        # Score the full conversation
+        try:
+            evaluation = score_response(
+                response=final_response,
+                prompt=conversation_history[0]["content"],  # Initial user message
+                virtue=virtue,
+                description=description,
+                rubric=rubric,
+                judge_model=self.judge_model,
+                conversation_history=conversation_history,
+            )
+            self.api_call_count += 1  # Count judge API call
+        except Exception as e:
+            self._log(f"    Error scoring multi-turn response: {e}")
+            return {
+                "scenario_id": scenario_id,
+                "prompt": conversation_history[0]["content"] if conversation_history else "",
+                "response": final_response,
+                "score": None,
+                "reasoning": f"Scoring error: {e}",
+                "error": True,
+                "conversation_history": conversation_history,
+            }
+
+        score = evaluation.get("score")
+        self._log(f"    Score: {score}/2")
+
+        return {
+            "scenario_id": scenario_id,
+            "prompt": conversation_history[0]["content"] if conversation_history else "",
+            "response": final_response,
+            "error": False,
+            "conversation_history": conversation_history,
+            "num_turns": len(turns),
             **evaluation,  # includes score, justification, highlights, etc.
         }
 

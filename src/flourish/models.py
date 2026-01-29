@@ -2,7 +2,7 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List, Dict
 
 
 class BaseModel(ABC):
@@ -12,8 +12,24 @@ class BaseModel(ABC):
         self.model_name = model_name
 
     @abstractmethod
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        """Generate a response from the model."""
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        """
+        Generate a response from the model.
+
+        Args:
+            prompt: The user's message/prompt.
+            system_prompt: Optional system prompt for the model.
+            conversation_history: Optional list of previous messages in format
+                [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
+
+        Returns:
+            The model's response as a string.
+        """
         pass
 
 
@@ -25,8 +41,18 @@ class AnthropicModel(BaseModel):
         import anthropic
         self.client = anthropic.Anthropic()
 
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        messages = [{"role": "user", "content": prompt}]
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        # Build messages list with conversation history if provided
+        if conversation_history:
+            messages = conversation_history.copy()
+            messages.append({"role": "user", "content": prompt})
+        else:
+            messages = [{"role": "user", "content": prompt}]
 
         kwargs = {
             "model": self.model_name,
@@ -48,10 +74,20 @@ class OpenAIModel(BaseModel):
         import openai
         self.client = openai.OpenAI()
 
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
+
+        # Add conversation history if provided
+        if conversation_history:
+            messages.extend(conversation_history)
+
         messages.append({"role": "user", "content": prompt})
 
         response = self.client.chat.completions.create(
@@ -71,10 +107,27 @@ class GoogleModel(BaseModel):
         genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
         self.model = genai.GenerativeModel(model_name)
 
-    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        full_prompt = prompt
+    def generate(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        # Google Gemini doesn't have native conversation history support in the same way
+        # So we'll format the history as part of the prompt
+        full_prompt = ""
+
         if system_prompt:
-            full_prompt = f"{system_prompt}\n\n{prompt}"
+            full_prompt += f"{system_prompt}\n\n"
+
+        if conversation_history:
+            full_prompt += "## Conversation History:\n"
+            for msg in conversation_history:
+                role = msg["role"].capitalize()
+                content = msg["content"]
+                full_prompt += f"{role}: {content}\n\n"
+
+        full_prompt += f"User: {prompt}"
 
         response = self.model.generate_content(full_prompt)
         return response.text
